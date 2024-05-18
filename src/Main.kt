@@ -1,6 +1,9 @@
 import java.math.BigInteger
 import kotlin.concurrent.thread
+import java.math.BigDecimal
+import java.math.MathContext
 
+// zadanie 1 obliczanie duzej silni
 fun factorial(n:Int):BigInteger{
     // liczba dostepnych rdzeni procesora
     val numThread = Runtime.getRuntime().availableProcessors()
@@ -44,9 +47,24 @@ fun factorial(n:Int):BigInteger{
     }
     return finalResult
 }
+// zadanie 2
+fun calculateEulerNumber(n:Int):BigDecimal{
+    var result=BigDecimal.ONE
+    var factorial = BigDecimal.ONE
+    for(i in 1..n){
+        factorial *=BigDecimal.valueOf(i.toLong())
+        result += BigDecimal.ONE.divide(factorial, MathContext.DECIMAL128)
+    }
+    return result
+}
 
 fun main(){
+    // sprawdzanie 1 zadania czyli duzej silni
     val n=100 // przykladowa wartosc dla ktorej obliczamy silnie
     val result = factorial (n)
     println("silnia z $n to $result")
+    // sprawdzanie 2 zadania liczenie z wzoru
+    val n_2 = 17
+    val eulerNumber=calculateEulerNumber(n_2)
+    println("EulerNumber: $eulerNumber")
 }
