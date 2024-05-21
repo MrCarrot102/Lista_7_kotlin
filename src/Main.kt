@@ -2,6 +2,9 @@ import java.math.BigInteger
 import kotlin.concurrent.thread
 import java.math.BigDecimal
 import java.math.MathContext
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 // zadanie 1 obliczanie duzej silni
 fun factorial(n:Int):BigInteger{
@@ -58,13 +61,60 @@ fun calculateEulerNumber(n:Int):BigDecimal{
     return result
 }
 
+// zadanie 3
+fun countDivisors(number: Int): Int{
+    var count = 0
+    for (i in 1..Math.sqrt(number.toDouble()).toInt()){
+        if(number % i == 0) {
+
+        count += if ( i == number / i ) 1 else 2
+        }
+    }
+    return count
+}
+@Synchronized
+fun updateMaxDivisors(number: Int , divisorsCount: Int , maxDivisors: AtomicInteger, numberWithMaxDivisors: AtomicReference<Int>){
+    if(divisorsCount>maxDivisors.get()){
+        maxDivisors.set(divisorsCount)
+        numberWithMaxDivisors.set(number)
+    }
+}
 fun main(){
     // sprawdzanie 1 zadania czyli duzej silni
     val n=100 // przykladowa wartosc dla ktorej obliczamy silnie
     val result = factorial (n)
     println("silnia z $n to $result")
+
     // sprawdzanie 2 zadania liczenie z wzoru
     val n_2 = 17
     val eulerNumber=calculateEulerNumber(n_2)
     println("EulerNumber: $eulerNumber")
+    // zadanie 3
+    val maxNumber = 100000
+    val threadCount = Runtime.getRuntime().availableProcessors()
+    val executor = Executors.newFixedThreadPool(threadCount)
+    val maxDivisors = AtomicInteger(0)
+    val numberWithMaxDivisors = AtomicReference(0)
+
+    val rangeSize = maxNumber / threadCount
+    val futures = mutableListOf<java.util.concurrent.Future<*>>()
+
+    for(i in 0 until  threadCount) {
+        val start = i * rangeSize + 1
+        val end = if ( i == threadCount - 1 ) maxNumber else ( i + 1 ) * rangeSize
+
+        futures.add(executor.submit{
+            for ( n in start..end ) {
+                val divisorsCount = countDivisors(n)
+                updateMaxDivisors(n , divisorsCount, maxDivisors, numberWithMaxDivisors)
+            }
+        })
+    }
+    futures.forEach { it.get() }
+    executor.shutdown()
+
+    println("Liczba = ${numberWithMaxDivisors.get()}")
+    println("liczba dzielników = ${maxDivisors.get()}")
 }
+
+
